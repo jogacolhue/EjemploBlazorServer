@@ -1,0 +1,88 @@
+﻿@page "/subirarchivo"
+
+<h3>Subida de Archivos - Base - Matblazor</h3>
+
+<MatFileUpload OnChange="@ArchivoCargado" Label="Seleccione o arrastre un archivo"></MatFileUpload>
+
+<div>@archivo</div>
+
+@*<table>
+        <thead>
+
+            <tr><th>Data</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var line in lines)
+            {
+                <tr>
+                    <td>@line</td>
+                </tr>
+            }
+        </tbody>
+    </table>*@
+
+<MatTable Items="@lineas" class="mat-elevation-z5">
+    <MatTableHeader>
+        <th>Lineas</th>
+    </MatTableHeader>
+    <MatTableRow>
+        <td>@context</td>
+    </MatTableRow>
+</MatTable>
+
+@code
+{
+    List<string> lineas;
+    string archivo = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        lineas = new List<string>();
+
+        await base.OnInitializedAsync();
+    }
+
+    async Task ArchivoCargado(IMatFileUploadEntry[] files)
+    {
+        try
+        {
+            var file = files.FirstOrDefault();
+            if (file == null)
+            {
+                return;
+            }
+
+            using (var stream = new System.IO.MemoryStream())
+            {
+
+                archivo = file.Name;
+
+                await file.WriteToStreamAsync(stream);
+                stream.Seek(0, System.IO.SeekOrigin.Begin);
+                using (var reader = new System.IO.StreamReader(stream))
+                {
+
+                    lineas.Clear();
+
+                    while (!reader.EndOfStream)
+                    {
+                        string CurrentLine = await reader.ReadLineAsync();
+                        lineas.Add(CurrentLine);
+                    }
+
+                    //StateHasChanged();
+
+                }
+            }
+        }
+
+        catch (Exception e)
+        {
+            archivo = $"Error:\r\n{e.Message}\r\n{e.StackTrace}";
+        }
+        finally
+        {
+            await InvokeAsync(() => { this.StateHasChanged(); });
+        }
+    }
+}

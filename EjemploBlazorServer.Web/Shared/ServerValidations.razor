@@ -1,0 +1,42 @@
+﻿@if (IsVisible)
+{
+    @if (Result)
+    {
+        <div id="divValidationMessage" class="col-10 alert alert-info row">
+            <div class="col-11" style="text-align:left">
+                <span>@ChildContent se guardó correctamente</span>
+            </div>
+            <div class="col-1" style="text-align:right">
+                <a style="text-underline-position:below; cursor:pointer" @onclick="(() => CloseValidation())">x</a>
+            </div>
+        </div>
+
+    }
+    else
+    {
+        <div id="divValidationMessage" class="col-10 alert alert-danger row">
+            <div class="col-11" style="text-align:left">
+                <span style="font-style:italic; font-weight:bold">Ocurrió un error. Contacte al administrador del sistema.</span>
+            </div>
+            <div class="col-1" style="text-align:right">
+                <a style="text-underline-position:below; cursor:pointer" @onclick="(() => CloseValidation())">x</a>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public bool Result { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    private void CloseValidation()
+    {
+        IsVisible = false;
+    }
+}

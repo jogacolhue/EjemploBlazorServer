@@ -1,0 +1,202 @@
+﻿@using EjemploBlazorServer.Shared.Modelos
+@page "/contactos"
+@attribute [Authorize]
+@inject Servicios.IApiServicio<Contacto> contactService
+@inject IJSRuntime JSRuntime
+
+<div class="col-12">
+    <h3><b>Información de contacto</b></h3>
+    <hr />
+
+    <ServerValidations IsVisible="IsVisible" Result="Result">
+        @RecordName
+    </ServerValidations>
+
+    <EditForm Model="@contacto" OnValidSubmit="@SaveContact">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="col-12 row">
+            <label class="col-2 font-weight-bold">Name :</label>
+            <input @ref="firstNameTextBox" class="form-control col-3" @bind="contacto.Name" placeholder="nombre" />
+            @*&nbsp;<ValidationMessage For="@(() => contact.Name)" />*@
+        </div>
+        <br />
+        <div class="col-12 row">
+            <label class="col-2 font-weight-bold">Phone Number :</label>
+            <InputText class="form-control col-3" @bind-Value="contacto.PhoneNumber" placeholder="" />
+            @*&nbsp;<ValidationMessage For="@(() => contacto.PhoneNumber)" />*@
+        </div>
+        <br />
+        <div class="col-12 row">
+            <label class="col-2 font-weight-bold">city :</label>
+            <select class="form-control col-3" @onchange="OnChangeEvent">
+                @*@bind="contact.City"*@
+                @if (@Cities != null)
+                {
+                    <option value="">select city..</option>
+                    @foreach (var city in Cities)
+                    {
+                        <option value="@city">@city</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <br />
+        <div class="col-12 row">
+            <span class="col-2"></span>
+            <input type="submit" class="form-control col-1 btn btn-primary" value="Save" />
+        </div>
+    </EditForm>
+</div>
+
+<br />
+
+<h3>Contacts</h3>
+
+@if (contactos == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Phone Number</th>
+                <th>Ciudad</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var contact in contactos)
+            {
+                <tr>
+                    <td>@contact.Id</td>
+                    <td>@contact.Name</td>
+                    <td>@contact.PhoneNumber</td>
+                    <td>@contact.City</td>
+                    <td>
+                        <a style="text-underline-position:below; cursor:pointer; color:blue" @onclick="(() => EditContact(contact))">Edit</a> |
+                        <a style="text-underline-position:below; cursor:pointer; color:blue" @onclick="(() => DeleteContact(contact.Id))">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h3>Utilización de MatRazor</h3>
+
+<MatTable Items="@contactos" class="mat-elevation-z5">
+    <MatTableHeader>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Phone Number</th>
+        <th>Ciudad</th>
+        <th>Actions</th>
+    </MatTableHeader>
+    <MatTableRow>
+        <td>@context.Id</td>
+        <td>@context.Name</td>
+        <td>@context.PhoneNumber</td>
+        <td>@context.City</td>
+        <td>
+            <a style="text-underline-position:below; cursor:pointer; color:blue" @onclick="(() => EditContact(context))">Edit</a> |
+            <a style="text-underline-position:below; cursor:pointer; color:blue" @onclick="(() => DeleteContact(context.Id))">Delete</a>
+        </td>
+    </MatTableRow>
+</MatTable>
+
+@code {
+    ElementReference firstNameTextBox;
+    public Contacto contacto { get; set; }
+    List<Contacto> contactos;
+
+    public string[] Cities { get; set; }
+    public string SelectedCity { get; set; }
+
+    public bool IsVisible { get; set; }
+    public bool Result { get; set; }
+    public string RecordName { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        contacto = new Contacto();
+        contactos = new List<Contacto>();
+
+        await base.OnInitializedAsync();
+    }
+
+    private void OnChangeEvent(ChangeEventArgs changeEventArgs)
+    {
+        contacto.City = (string)changeEventArgs.Value;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Cities == null)
+        {
+            Cities = await JSRuntime.InvokeAsync<string[]>("getCities");
+
+            StateHasChanged();
+
+        }
+
+        if (firstRender)
+        {
+            await LoadContacts();
+
+            StateHasChanged();
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task LoadContacts()
+    {
+        await Task.Delay(500);
+
+        contactos = await contactService.ObetenerTodoAsync("api/contactos");
+
+        StateHasChanged();
+    }
+
+    private async Task SaveContact()
+    {
+
+        bool result = false;
+
+        if (contacto.Id == 0)
+            result = await contactService.GuardarAsync("api/contactos", contacto);
+        else
+            result = await contactService.ActualizarAsync("api/contactos/", contacto.Id, contacto);
+
+        await LoadContacts();
+
+        Result = result == false ? false : true;
+        IsVisible = true;
+
+        RecordName = contacto.Name;
+
+        contacto = new Contacto();
+
+        //await JSRuntime.InvokeVoidAsync("alerta");
+
+        await JSRuntime.InvokeVoidAsync("setFocusOnElement", firstNameTextBox);
+    }
+
+    private async Task DeleteContact(int authorId)
+    {
+        await contactService.BorrarAsync("api/contactos/", authorId);
+        await LoadContacts();
+
+    }
+
+    private void EditContact(Contacto contacto)
+    {
+        this.contacto = contacto;
+    }
+} 
