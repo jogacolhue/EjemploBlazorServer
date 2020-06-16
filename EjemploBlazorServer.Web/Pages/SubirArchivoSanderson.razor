@@ -1,0 +1,80 @@
+﻿@page "/subirarchivosa"
+
+<h3>SubirArchivoSanderson</h3>
+
+<InputFile OnChange="HandleFileSelected" />
+
+@if (file != null)
+{
+    <p>Name: @file.Name</p>
+    <p>Size in bytes: @file.Size</p>
+    <p>Last modified date: @file.LastModified.ToShortDateString()</p>
+    <p>Content type (not always supplied by the browser): @file.Type</p>
+}
+
+<MatTable Items="@lineas" class="mat-elevation-z5">
+    <MatTableHeader>
+        <th>Lineas</th>
+    </MatTableHeader>
+    <MatTableRow>
+        <td>@context</td>
+    </MatTableRow>
+</MatTable>
+
+@code {
+    IFileListEntry file;
+    List<string> lineas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        lineas = new List<string>();
+
+        await base.OnInitializedAsync();
+    }
+
+    async Task HandleFileSelected(IFileListEntry[] files)
+    {
+        file = files.FirstOrDefault();
+
+        if (file == null)
+        {
+            return;
+        }
+
+        //file.Data.Seek(0, System.IO.SeekOrigin.Begin);
+        //using (var reader = new System.IO.StreamReader(file.Data))
+        //{
+
+        //    lineas.Clear();
+
+        //    while (!reader.EndOfStream)
+        //    {
+        //        string CurrentLine = await reader.ReadLineAsync();
+        //        lineas.Add(CurrentLine);
+        //    }
+
+        //    StateHasChanged();
+        //}
+
+        using (var stream = new System.IO.MemoryStream())
+        {
+            await file.Data.CopyToAsync(stream);
+            stream.Seek(0, System.IO.SeekOrigin.Begin);
+            using (var reader = new System.IO.StreamReader(stream))
+            {
+
+                lineas.Clear();
+
+                while (!reader.EndOfStream)
+                {
+                    string CurrentLine = await reader.ReadLineAsync();
+                    lineas.Add(CurrentLine);
+                }
+
+                StateHasChanged();
+
+            }
+        }
+    }
+
+}

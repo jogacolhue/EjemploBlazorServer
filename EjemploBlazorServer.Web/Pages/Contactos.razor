@@ -114,22 +114,22 @@ else
 
 <h3>Sort Header</h3>
 
-<div class="table-wrapper-scroll-y my-custom-scrollbar">
-    <table class="table">
-        <MatSortHeaderRow Class="demo-h-row" SortChanged="@SortData">
-            <MatSortHeader Class="demo-h" SortId="id">ID</MatSortHeader>
-            <MatSortHeader Class="demo-h" SortId="name">Name</MatSortHeader>
-            <MatSortHeader Class="demo-h" SortId="phonenumber">Phone number</MatSortHeader>
-            <MatSortHeader Class="demo-h" SortId="city">City</MatSortHeader>
-            <MatSortHeader Class="demo-h">Actions</MatSortHeader>
-        </MatSortHeaderRow>
+@if (sortedData == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="table-wrapper-scroll-y my-custom-scrollbar">
+        <table class="table">
+            <MatSortHeaderRow Class="demo-h-row" SortChanged="@SortData">
+                <MatSortHeader Class="demo-h" SortId="id">ID</MatSortHeader>
+                <MatSortHeader Class="demo-h" SortId="name">Name</MatSortHeader>
+                <MatSortHeader Class="demo-h" SortId="phonenumber">Phone number</MatSortHeader>
+                <MatSortHeader Class="demo-h" SortId="city">City</MatSortHeader>
+                <MatSortHeader Class="demo-h">Actions</MatSortHeader>
+            </MatSortHeaderRow>
 
-        @if (sortedData == null)
-        {
-            <p><em>Loading...</em></p>
-        }
-        else
-        {
             @foreach (var dessert in sortedData)
             {
                 <tr>
@@ -143,9 +143,9 @@ else
                     </td>
                 </tr>
             }
-        }
-    </table>
-</div>
+        </table>
+    </div>
+}
 
 @code {
     ElementReference firstNameTextBox;
