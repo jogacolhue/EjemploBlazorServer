@@ -16,20 +16,20 @@
         <DataAnnotationsValidator />
         <ValidationSummary />
         <div class="col-12 row">
-            <label class="col-2 font-weight-bold">Name :</label>
+            <label class="col-2 font-weight-bold">Nombre :</label>
             <input @ref="firstNameTextBox" class="form-control col-3" @bind="contacto.Name" placeholder="nombre" />
             @*&nbsp;<ValidationMessage For="@(() => contact.Name)" />*@
         </div>
         <br />
         <div class="col-12 row">
-            <label class="col-2 font-weight-bold">Phone Number :</label>
+            <label class="col-2 font-weight-bold">Teléfono :</label>
             <InputText class="form-control col-3" @bind-Value="contacto.PhoneNumber" placeholder="" />
             @*&nbsp;<ValidationMessage For="@(() => contacto.PhoneNumber)" />*@
         </div>
         <br />
         <div class="col-12 row">
-            <label class="col-2 font-weight-bold">city :</label>
-            <select class="form-control col-3" @onchange="OnChangeEvent">
+            <label class="col-2 font-weight-bold">Ciudad :</label>
+            <select id="selecte" class="form-control col-3" @onchange="OnChangeEvent" value="@SelectedCity">
                 @*@bind="contact.City"*@
                 @if (@Cities != null)
                 {
@@ -60,32 +60,34 @@
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Phone Number</th>
-                <th>Ciudad</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var contact in contactos)
-            {
+    <div class="table-wrapper-scroll-y my-custom-scrollbar">
+        <table class="table table-bordered table-striped mb-0">
+            <thead>
                 <tr>
-                    <td>@contact.Id</td>
-                    <td>@contact.Name</td>
-                    <td>@contact.PhoneNumber</td>
-                    <td>@contact.City</td>
-                    <td>
-                        <a style="text-underline-position:below; cursor:pointer; color:blue" @onclick="(() => EditContact(contact))">Edit</a> |
-                        <a style="text-underline-position:below; cursor:pointer; color:blue" @onclick="(() => DeleteContact(contact.Id))">Delete</a>
-                    </td>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Phone Number</th>
+                    <th>Ciudad</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var contact in contactos)
+                {
+                    <tr>
+                        <td>@contact.Id</td>
+                        <td>@contact.Name</td>
+                        <td>@contact.PhoneNumber</td>
+                        <td>@contact.City</td>
+                        <td>
+                            <a style="text-underline-position:below; cursor:pointer; color:blue" @onclick="(() => EditContact(contact))">Edit</a> |
+                            <a style="text-underline-position:below; cursor:pointer; color:blue" @onclick="(() => DeleteContact(contact.Id))">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
 
 <h3>Utilización de MatRazor</h3>
@@ -110,6 +112,41 @@ else
     </MatTableRow>
 </MatTable>
 
+<h3>Sort Header</h3>
+
+<div class="table-wrapper-scroll-y my-custom-scrollbar">
+    <table class="table">
+        <MatSortHeaderRow Class="demo-h-row" SortChanged="@SortData">
+            <MatSortHeader Class="demo-h" SortId="id">ID</MatSortHeader>
+            <MatSortHeader Class="demo-h" SortId="name">Name</MatSortHeader>
+            <MatSortHeader Class="demo-h" SortId="phonenumber">Phone number</MatSortHeader>
+            <MatSortHeader Class="demo-h" SortId="city">City</MatSortHeader>
+            <MatSortHeader Class="demo-h">Actions</MatSortHeader>
+        </MatSortHeaderRow>
+
+        @if (sortedData == null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else
+        {
+            @foreach (var dessert in sortedData)
+            {
+                <tr>
+                    <td>@dessert.Id</td>
+                    <td>@dessert.Name</td>
+                    <td>@dessert.PhoneNumber</td>
+                    <td>@dessert.City</td>
+                    <td>
+                        <a style="text-underline-position:below; cursor:pointer; color:blue" @onclick="(() => EditContact(dessert))">Edit</a> |
+                        <a style="text-underline-position:below; cursor:pointer; color:blue" @onclick="(() => DeleteContact(dessert.Id))">Delete</a>
+                    </td>
+                </tr>
+            }
+        }
+    </table>
+</div>
+
 @code {
     ElementReference firstNameTextBox;
     public Contacto contacto { get; set; }
@@ -122,17 +159,23 @@ else
     public bool Result { get; set; }
     public string RecordName { get; set; }
 
+    Contacto[] sortedData;
+
     protected override async Task OnInitializedAsync()
     {
         contacto = new Contacto();
         contactos = new List<Contacto>();
+        SortData(null);
 
         await base.OnInitializedAsync();
     }
 
     private void OnChangeEvent(ChangeEventArgs changeEventArgs)
     {
-        contacto.City = (string)changeEventArgs.Value;
+        SelectedCity = (string)changeEventArgs.Value;
+        //contacto.City = (string)changeEventArgs.Value;
+        if (string.IsNullOrEmpty(contacto.City))
+            contacto.City = ".";
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -161,11 +204,14 @@ else
 
         contactos = await contactService.ObetenerTodoAsync("api/contactos");
 
+        sortedData = contactos?.ToArray();
+
         StateHasChanged();
     }
 
     private async Task SaveContact()
     {
+        contacto.City = SelectedCity;
 
         bool result = false;
 
@@ -190,13 +236,56 @@ else
 
     private async Task DeleteContact(int authorId)
     {
-        await contactService.BorrarAsync("api/contactos/", authorId);
-        await LoadContacts();
+        var xx = await JSRuntime.InvokeAsync<bool>("window.confirm", "¿Está seguro de realizar esta operación?");
+        if (xx)
+        {
+            await contactService.BorrarAsync("api/contactos/", authorId);
+            await LoadContacts();
+        }
 
     }
 
     private void EditContact(Contacto contacto)
     {
         this.contacto = contacto;
+
+        //await JSRuntime.InvokeVoidAsync("selectElement", "selecte", contacto.City);
+        SelectedCity = contacto.City;
     }
-} 
+
+    void SortData(MatSortChangedEvent sort)
+    {
+        sortedData = contactos.ToArray();
+        if (!(sort == null || sort.Direction == MatSortDirection.None || string.IsNullOrEmpty(sort.SortId)))
+        {
+            Comparison<Contacto> comparison = null;
+            switch (sort.SortId)
+            {
+                case "name":
+                    comparison = (s1, s2) => string.Compare(s1.Name, s2.Name, StringComparison.InvariantCultureIgnoreCase);
+                    break;
+                case "phonenumber":
+                    comparison = (s1, s2) => s1.PhoneNumber.CompareTo(s2.PhoneNumber);
+                    break;
+                case "id":
+                    comparison = (s1, s2) => s1.Id.CompareTo(s2.Id);
+                    break;
+                case "city":
+                    comparison = (s1, s2) => s1.City.CompareTo(s2.City);
+                    break;
+            }
+            if (comparison != null)
+            {
+                if (sort.Direction == MatSortDirection.Desc)
+                {
+                    Array.Sort(sortedData, (s1, s2) => -1 * comparison(s1, s2));
+                }
+                else
+                {
+                    Array.Sort(sortedData, comparison);
+                }
+
+            }
+        }
+    }
+}

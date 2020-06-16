@@ -12,3 +12,8 @@ function getCities() {
         'Charlotte', 'Indianapolis', 'Seattle', 'Denver', 'Washington'];
     return cities;
 }
+
+//function selectElement(id, valueToSelect) {
+//    let element = document.getElementById(id);
+//    element.value = valueToSelect;
+//}

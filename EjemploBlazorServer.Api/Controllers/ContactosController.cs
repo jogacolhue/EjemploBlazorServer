@@ -13,7 +13,7 @@ namespace EjemploBlazorServer.Api.Controllers
     [Authorize]
     public class ContactosController : ControllerBase
     {
-        private static readonly List<Contacto> contactos = GenerarContactos(5);
+        private static readonly List<Contacto> contactos = GenerarContactos(100);
 
         private static List<Contacto> GenerarContactos(int number)
         {

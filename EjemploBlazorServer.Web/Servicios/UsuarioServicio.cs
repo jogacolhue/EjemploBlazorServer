@@ -29,7 +29,12 @@ namespace EjemploBlazorServer.Web.Servicios
             var responseStatusCode = response.StatusCode;
             var responseBody = await response.Content.ReadAsStringAsync();
 
-            var returnedUser = JsonSerializer.Deserialize<Usuario>(responseBody);
+            Usuario returnedUser = new Usuario();
+
+            if (responseStatusCode.ToString() == "OK")
+                returnedUser = JsonSerializer.Deserialize<Usuario>(responseBody);
+
+            //var returnedUser = JsonSerializer.Deserialize<Usuario>(responseBody);
 
             return await Task.FromResult(returnedUser);
         }
